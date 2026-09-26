@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stegano-X &bull; Digital Image Steganography Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg0: #06080d; --bg1: #0a0e17; --bg2: #101726; --bg3: #162033;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.16);
+      --t1: #f8fafc; --t2: #cbd5e1; --t3: #94a3b8; --t4: #64748b;
+      --blue: #38bdf8; --green: #10b981; --red: #f43f5e; --purple: #a78bfa;
+      --r: 8px;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg0);
+      background-image: radial-gradient(ellipse 80% 50% at 50% -10%, #152238 0%, #06080d 70%);
+      color: var(--t1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    header {
+      background: rgba(10, 14, 23, 0.85);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(20px);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-badge {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(167,139,250,0.15));
+      border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--blue); font-size: 14px;
+    }
+    .logo-text { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
+    .tag { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: rgba(56,189,248,0.1); color: var(--blue); border: 1px solid rgba(56,189,248,0.3); }
+
+    main {
+      max-width: 960px;
+      width: 100%;
+      margin: 30px auto;
+      padding: 0 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      background: var(--bg1);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(16,23,38,0.7);
+      padding: 4px;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+      width: fit-content;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--t3);
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      color: #fff;
+      background: rgba(56,189,248,0.15);
+      border: 1px solid rgba(56,189,248,0.3);
+    }
+    .dropzone {
+      border: 2px dashed var(--border2);
+      border-radius: var(--r);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(6,8,13,0.4);
+    }
+    .dropzone:hover {
+      border-color: var(--blue);
+      background: rgba(56,189,248,0.03);
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      background: var(--bg0);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 12px;
+      color: var(--t1);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 10px;
+      outline: none;
+    }
+    textarea:focus, input[type="text"]:focus { border-color: var(--blue); }
+    .btn {
+      background: linear-gradient(180deg, #38bdf8, #0284c7);
+      color: #06080d;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: linear-gradient(180deg, #7dd3fc, #0ea5e9); transform: translateY(-1px); }
+    .preview-box {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg0);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: none;
+    }
+    canvas { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 0 auto; }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 16px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--t4);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-badge"><i class="fa-solid fa-eye-slash"></i></div>
+      <div class="logo-text">STEGANO-X <span style="color:var(--blue);font-weight:400;">/</span> FORENSICS</div>
+    </div>
+    <div class="tag">CLIENT-SIDE LSB ENCODING (ZERO UPLOAD)</div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-encode-btn" onclick="setMode('encode')"><i class="fa-solid fa-lock"></i> HIDE DATA (ENCODE)</button>
+        <button class="tab-btn" id="tab-decode-btn" onclick="setMode('decode')"><i class="fa-solid fa-unlock"></i> REVEAL DATA (DECODE)</button>
+      </div>
+
+      <!-- Encode Mode -->
+      <div id="encode-section">
+        <div class="dropzone" id="dropzone-encode" onclick="document.getElementById('input-file-encode').click()">
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size:32px;color:var(--blue);margin-bottom:10px;"></i>
+          <p style="font-size:13px;font-weight:600;">Drop Carrier Image Here or Click to Browse</p>
+          <p style="font-size:11px;color:var(--t4);margin-top:4px;">Supports PNG, BMP, WebP, JPG</p>
+          <input type="file" id="input-file-encode" accept="image/*" style="display:none" onchange="handleImage(this, 'encode')">
+        </div>
+
+        <div style="margin-top:16px;">
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:0.04em;">Secret Message Payload:</label>
+          <textarea id="secret-text" rows="4" placeholder="Enter confidential text or credentials to conceal into image pixels..."></textarea>
+        </div>
+
+        <button class="btn" onclick="encodePayload()"><i class="fa-solid fa-shield-halved"></i> CONCEAL INTO PIXELS &amp; DOWNLOAD</button>
+
+        <div class="preview-box" id="preview-encode">
+          <p style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px;"><i class="fa-solid fa-check"></i> Steganographic Carrier Ready:</p>
+          <canvas id="canvas-encode"></canvas>
+          <a id="download-link" class="btn" style="margin-top:12px;display:none;" download="stego_image.png"><i class="fa-solid fa-download"></i> Download Stego Image (.png)</a>
+        </div>
+      </div>
+
+      <!-- Decode Mode -->
+      <div id="decode-section" style="display:none;">
+        <div class="dropzone" id="dropzone-decode" onclick="document.getElementById('input-file-decode').click()">
+          <i class="fa-solid fa-magnifying-glass" style="font-size:32px;color:var(--purple);margin-bottom:10px;"></i>
+          <p style="font-size:13px;font-weight:600;">Drop Stego Image to Extract Concealed Data</p>
+          <p style="font-size:11px;color:var(--t4);margin-top:4px;">Extracts hidden text from Least Significant Bits (LSB)</p>
+          <input type="file" id="input-file-decode" accept="image/*" style="display:none" onchange="handleImage(this, 'decode')">
+        </div>
+
+        <button class="btn" onclick="decodePayload()" style="margin-top:16px;"><i class="fa-solid fa-unlock-keyhole"></i> EXTRACT HIDDEN PAYLOAD</button>
+
+        <div class="preview-box" id="preview-decode">
+          <p style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:6px;">EXTRACTED PAYLOAD:</p>
+          <div id="extracted-result" class="mono" style="padding:14px;background:#030508;border:1px solid var(--border);border-radius:4px;color:var(--blue);font-size:13px;white-space:pre-wrap;word-break:break-all;"></div>
+        </div>
+        <canvas id="canvas-decode" style="display:none"></canvas>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    Stegano-X &bull; Python Desktop Core + WebAssembly / HTML5 Canvas Forensics &bull; nagpalansh27
+  </footer>
+
+  <script>
+    let currentMode = 'encode';
+    const HEADER = "STEG27::";
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('tab-encode-btn').className = 'tab-btn ' + (mode === 'encode' ? 'active' : '');
+      document.getElementById('tab-decode-btn').className = 'tab-btn ' + (mode === 'decode' ? 'active' : '');
+      document.getElementById('encode-section').style.display = mode === 'encode' ? 'block' : 'none';
+      document.getElementById('decode-section').style.display = mode === 'decode' ? 'block' : 'none';
+    }
+
+    function handleImage(input, target) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.getElementById('canvas-' + target);
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          document.getElementById('preview-' + target).style.display = 'block';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function encodePayload() {
+      const canvas = document.getElementById('canvas-encode');
+      const ctx = canvas.getContext('2d');
+      const text = document.getElementById('secret-text').value.trim();
+      if (!text) { alert('Please enter a secret message payload.'); return; }
+
+      const payload = HEADER + text + "::END";
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      // Convert payload string to binary string
+      let bin = '';
+      for (let i = 0; i < payload.length; i++) {
+        let b = payload.charCodeAt(i).toString(2).padStart(8, '0');
+        bin += b;
+      }
+
+      if (bin.length > (data.length / 4) * 3) {
+        alert('Payload is too large for this image resolution.');
+        return;
+      }
+
+      // Encode into LSB of RGB channels
+      let bitIdx = 0;
+      for (let i = 0; i < data.length && bitIdx < bin.length; i++) {
+        if ((i + 1) % 4 === 0) continue; // skip alpha
+        data[i] = (data[i] & ~1) | parseInt(bin[bitIdx]);
+        bitIdx++;
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const url = canvas.toDataURL('image/png');
+      const dl = document.getElementById('download-link');
+      dl.href = url;
+      dl.style.display = 'inline-flex';
+      alert('Payload successfully encoded into pixels! Click "Download Stego Image".');
+    }
+
+    function decodePayload() {
+      const canvas = document.getElementById('canvas-decode');
+      const ctx = canvas.getContext('2d');
+      if (canvas.width === 0) { alert('Please load a stego image first.'); return; }
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      let bin = '';
+      let chars = '';
+      for (let i = 0; i < data.length; i++) {
+        if ((i + 1) % 4 === 0) continue;
+        bin += (data[i] & 1).toString();
+        if (bin.length === 8) {
+          chars += String.fromCharCode(parseInt(bin, 2));
+          bin = '';
+          if (chars.endsWith("::END")) break;
+        }
+      }
+
+      const resBox = document.getElementById('extracted-result');
+      if (chars.startsWith(HEADER)) {
+        const clean = chars.replace(HEADER, '').replace('::END', '');
+        resBox.innerText = clean;
+        document.getElementById('preview-decode').style.display = 'block';
+      } else {
+        resBox.innerText = 'No Stegano-X payload detected in this image.';
+        document.getElementById('preview-decode').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
